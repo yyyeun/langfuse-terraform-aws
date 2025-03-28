@@ -1,108 +1,152 @@
 ![GitHub Banner](https://github.com/langfuse/langfuse-k8s/assets/2834609/2982b65d-d0bc-4954-82ff-af8da3a4fac8)
 
-# Langfuse Cloud Deployment
+# AWS Langfuse Terraform module
 
-This repository contains Infrastructure as Code (IaC) configurations for deploying [Langfuse](https://langfuse.com/) - the open-source LLM observability platform - on major cloud providers. The goal is to provide production-ready, secure, and scalable deployment configurations using managed services whenever possible.
+This repository contains a Terraform module for deploying [Langfuse](https://langfuse.com/) - the open-source LLM observability platform - on AWS. This module aims to provide a production-ready, secure, and scalable deployment using managed services whenever possible.
 
-## Repository Structure
+## Usage
 
+1. Set up the module with the settings that suit your need. A minimal installation requires a `domain` which is under your control only.
+
+```hcl
+module "langfuse" {
+  source = "github.com/langfuse/langfuse-aws?ref=v0.1.0"
+
+  domain = "langfuse.example.com"
+  
+  # Optional use a differet name for your installation
+  # e.g. when using the module multiple times on the same AWS account
+  name   = "langfuse"
+  
+  # Optional: Configure the VPC
+  vpc_cidr = "10.0.0.0/16"
+  use_single_nat_gateway = true  # cheaper, but less resilient
+
+  # Optional: Configure the Kubernetes cluster
+  kubernetes_version = "1.32"
+  fargate_profile_namespaces = ["kube-system", "langfuse", "default"]
+
+  # Optional: Configure the database instances
+  postgres_instance_count = 2
+  postgres_min_capacity = 0.5
+  postgres_max_capacity = 2.0
+  
+  # Optional: Configure the cache
+  cache_node_type = "cache.t4g.small"
+  cache_instance_count = 1
+}
 ```
-.
-├── aws/                    # AWS Terraform configurations
-│   ├── eks.tf             # EKS cluster configuration
-│   └── ...               # Other AWS resources
-├── gcp/                   # Google Cloud Platform configurations
-│   ├── gke.tf            # GKE cluster setup
-│   └── ...               # Other GCP resources
-├── azure/                 # Azure configurations
-│   ├── aks.tf            # AKS cluster setup
-│   └── ...               # Other Azure resources
-├── values/               # Helm values for different cloud providers
-│   ├── aws.yaml   # AWS-specific Helm values
-│   ├── gcp.yaml   # GCP-specific Helm values
-│   └── azure.yaml # Azure-specific Helm values
-└── docs/                  # Detailed documentation
-    ├── aws.md            # AWS-specific setup guide
-    ├── gcp.md            # GCP-specific setup guide
-    └── azure.md          # Azure-specific setup guide
+
+2. Apply the DNS zone
+
+```bash
+terraform init
+terraform apply --target module.langfuse.aws_route53_zone.zone
 ```
 
-## Deployment Options
+3. Set up the Nameserver delegation on your DNS provider, e.g.
 
-### AWS Deployment (Coming Soon)
+```bash
+$ dig NS langfuse.example.com
+ns-1.awsdns-00.org.
+ns-2.awsdns-01.net.
+ns-3.awsdns-02.com.
+ns-4.awsdns-03.co.uk.
+```
 
-The AWS deployment utilizes the following managed services:
-- Amazon EKS for Kubernetes orchestration
-- Amazon RDS Aurora Serverless v2 for PostgreSQL
-- Amazon ElastiCache for Redis
-- AWS CloudWatch for logging and monitoring
+4. Apply the full stack
 
-### GCP Deployment (Coming Soon)
+```bash
+terraform apply
+```
 
-Planned managed services:
-- Google Kubernetes Engine (GKE)
-- Cloud SQL for PostgreSQL
-- Cloud Memorystore for Redis
-- Cloud Logging and Monitoring
+### Known issues
 
-### Azure Deployment (Coming Soon)
+Due to a race-condition between the Fargate Profile creation and the Kubernetes pod scheduling, on the initial system creation the coreDNS containers, and the clickhouse containers must be restarted:
 
-Planned managed services:
-- Azure Kubernetes Service (AKS)
-- Azure Database for PostgreSQL
-- Azure Cache for Redis
-- Azure Monitor for logging and monitoring
+```bash
+kubectl --namespace kube-system rollout restart deploy coredns
+kubectl --namespace langfuse delete pod langfuse-clickhouse-shard0-{0,1,2} langfuse-zookeeper-{0,1,2} 
+```
 
-## Prerequisites
+Afterwards your installation should become fully available.
 
-- Terraform >= 1.0
-- kubectl
-- Cloud provider CLI tools (aws-cli, gcloud, az)
-- Helm >= 3.0
 
-## Quick Start
+## Features
 
-1. Clone this repository
-2. Choose your cloud provider directory
-3. Configure your cloud credentials
-4. Apply the Terraform configuration
-5. Deploy Langfuse using Helm with the provided values file:
-   ```bash
-   # For AWS
-   helm install langfuse langfuse/langfuse -f values/aws-values.yaml
-   
-   # For GCP
-   helm install langfuse langfuse/langfuse -f values/gcp-values.yaml
-   
-   # For Azure
-   helm install langfuse langfuse/langfuse -f values/azure-values.yaml
-   ```
+This module creates a complete Langfuse stack with the following components:
 
-## Kubernetes Deployment
+- VPC with public and private subnets
+- EKS cluster with Fargate compute
+- Aurora PostgreSQL Serverless v2 cluster
+- ElastiCache Redis cluster
+- S3 bucket for storage
+- TLS certificates and Route53 DNS configuration
+- Required IAM roles and security groups
+- AWS Load Balancer Controller for ingress
+- EFS CSI Driver for persistent storage
 
-This repository focuses on the cloud infrastructure setup. For the actual Langfuse Kubernetes deployment, we use the official [Langfuse Kubernetes Helm Chart](https://github.com/langfuse/langfuse-k8s).
+## Requirements
 
-The Helm chart provides:
-- Production-ready defaults
-- Horizontal scaling configuration
-- Ingress configuration
-- Monitoring setup
-- Database migrations
+| Name | Version |
+|------|---------|
+| terraform | >= 1.0 |
+| aws | >= 5.0 |
+| kubernetes | >= 2.10 |
+| helm | >= 2.5 |
 
-### Helm Values
+## Providers
 
-We provide ready-to-use values files for each cloud provider in the `values/` directory. These files are pre-configured to:
-- Use cloud-native managed services
-- Set up appropriate connection strings
-- Configure monitoring and logging
-- Enable recommended security settings
-- Set resource requests/limits based on provider recommendations
+| Name | Version |
+|------|---------|
+| aws | >= 5.0 |
+| kubernetes | >= 2.10 |
+| helm | >= 2.5 |
+| random | >= 3.0 |
+| tls | >= 3.0 |
 
-You can customize these values files based on your specific needs. Common customizations include:
-- Adjusting replica counts
-- Modifying resource limits
-- Configuring custom domains
-- Setting up additional monitoring
+## Resources
+
+| Name | Type |
+|------|------|
+| aws_eks_cluster.langfuse | resource |
+| aws_eks_fargate_profile.namespaces | resource |
+| aws_rds_cluster.postgres | resource |
+| aws_elasticache_replication_group.redis | resource |
+| aws_s3_bucket.langfuse | resource |
+| aws_acm_certificate.cert | resource |
+| aws_route53_zone.zone | resource |
+| aws_iam_role.eks | resource |
+| aws_iam_role.fargate | resource |
+| aws_security_group.eks | resource |
+| aws_security_group.postgres | resource |
+| aws_security_group.redis | resource |
+| aws_security_group.vpc_endpoints | resource |
+
+## Inputs
+
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| name | Name prefix for resources | string | "langfuse" | no |
+| domain | Domain name used for resource naming | string | n/a | yes |
+| vpc_cidr | CIDR block for VPC | string | "10.0.0.0/16" | no |
+| use_single_nat_gateway | To use a single NAT Gateway (cheaper) or one per AZ (more resilient) | bool | true | no |
+| kubernetes_version | Kubernetes version for EKS cluster | string | "1.32" | no |
+| fargate_profile_namespaces | List of namespaces to create Fargate profiles for | list(string) | ["default", "langfuse", "kube-system"] | no |
+| postgres_instance_count | Number of PostgreSQL instances | number | 2 | no |
+| postgres_min_capacity | Minimum ACU capacity for PostgreSQL Serverless v2 | number | 0.5 | no |
+| postgres_max_capacity | Maximum ACU capacity for PostgreSQL Serverless v2 | number | 2.0 | no |
+| cache_node_type | ElastiCache node type | string | "cache.t4g.small" | no |
+| cache_instance_count | Number of ElastiCache instances | number | 1 | no |
+
+## Outputs
+
+| Name | Description |
+|------|-------------|
+| cluster_name | EKS Cluster Name |
+| cluster_host | EKS Cluster endpoint |
+| cluster_ca_certificate | EKS Cluster CA certificate |
+| cluster_token | EKS Cluster authentication token |
 
 ## Contributing
 
@@ -121,4 +165,4 @@ Contributions are welcome! Please feel free to submit a Pull Request. Here are s
 
 ## License
 
-MIT License - see LICENSE file for details
+MIT Licensed. See LICENSE for full details.
