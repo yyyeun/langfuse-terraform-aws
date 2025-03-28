@@ -32,12 +32,12 @@ module "vpc" {
 
   # Add required tags for the AWS Load Balancer Controller
   private_subnet_tags = {
-    "kubernetes.io/role/internal-elb" = "1"
+    "kubernetes.io/role/internal-elb"   = "1"
     "kubernetes.io/cluster/${var.name}" = "shared"
   }
 
   public_subnet_tags = {
-    "kubernetes.io/role/elb" = "1"
+    "kubernetes.io/role/elb"            = "1"
     "kubernetes.io/cluster/${var.name}" = "shared"
   }
 
@@ -62,10 +62,10 @@ resource "aws_vpc_endpoint" "sts" {
 }
 
 resource "aws_vpc_endpoint" "s3" {
-  vpc_id       = module.vpc.vpc_id
-  service_name = "com.amazonaws.${data.aws_region.current.name}.s3"
+  vpc_id            = module.vpc.vpc_id
+  service_name      = "com.amazonaws.${data.aws_region.current.name}.s3"
   vpc_endpoint_type = "Gateway"
-  route_table_ids = module.vpc.private_route_table_ids
+  route_table_ids   = module.vpc.private_route_table_ids
 
   tags = {
     Name = "${local.tag_name} S3 VPC Endpoint"

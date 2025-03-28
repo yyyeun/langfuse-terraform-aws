@@ -53,7 +53,7 @@ s3:
   mediaUpload:
     prefix: "media/"
 EOT
-  ingress_values = <<EOT
+  ingress_values  = <<EOT
 langfuse:
   ingress:
     enabled: true
@@ -101,11 +101,11 @@ resource "kubernetes_secret" "langfuse" {
 }
 
 resource "helm_release" "langfuse" {
-  name       = "langfuse"
-  repository = "https://langfuse.github.io/langfuse-k8s"
-  version    = "1.1.0"
-  chart      = "langfuse"
-  namespace  = "langfuse"
+  name             = "langfuse"
+  repository       = "https://langfuse.github.io/langfuse-k8s"
+  version          = "1.1.0"
+  chart            = "langfuse"
+  namespace        = "langfuse"
   create_namespace = true
 
   values = [
@@ -116,6 +116,7 @@ resource "helm_release" "langfuse" {
   depends_on = [
     aws_iam_role.langfuse_irsa,
     aws_iam_role_policy.langfuse_s3_access,
+    aws_eks_fargate_profile.namespaces,
     kubernetes_persistent_volume.clickhouse_data,
     kubernetes_persistent_volume.clickhouse_zookeeper,
   ]

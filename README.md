@@ -10,7 +10,7 @@ This module aims to provide a production-ready, secure, and scalable deployment 
 
 ## Usage
 
-1. Set up the module with the settings that suit your need. A minimal installation requires a `domain` which is under your control.
+1. Set up the module with the settings that suit your need. A minimal installation requires a `domain` which is under your control. Configure the kubernetes and helm providers to connect to the EKS cluster.
 
 ```hcl
 module "langfuse" {
@@ -39,6 +39,32 @@ module "langfuse" {
   cache_node_type = "cache.t4g.small"
   cache_instance_count = 2
 }
+
+provider "kubernetes" {
+  host                   = module.langfuse.cluster_host
+  cluster_ca_certificate = module.langfuse.cluster_ca_certificate
+  token                  = module.langfuse.cluster_token
+
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args        = ["eks", "get-token", "--cluster-name", module.langfuse.cluster_name]
+  }
+}
+
+provider "helm" {
+  kubernetes {
+    host                   = module.langfuse.cluster_host
+    cluster_ca_certificate = module.langfuse.cluster_ca_certificate
+    token                  = module.langfuse.cluster_token
+
+    exec {
+      api_version = "client.authentication.k8s.io/v1beta1"
+      command     = "aws"
+      args        = ["eks", "get-token", "--cluster-name", module.langfuse.cluster_name]
+    }
+  }
+}
 ```
 
 You can also navigate into the `examples/quickstart` directory and run the example there.
@@ -60,7 +86,7 @@ ns-3.awsdns-02.com.
 ns-4.awsdns-03.co.uk.
 ```
 
-4. Apply the full stack
+4. Apply the full stack. If this fails, run through the commands under Known Issues, and then re-run the apply command.
 
 ```bash
 terraform apply

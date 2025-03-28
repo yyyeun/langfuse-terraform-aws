@@ -48,8 +48,8 @@ resource "aws_acm_certificate_validation" "cert" {
 # Get the ALB details
 data "aws_lb" "ingress" {
   tags = {
-    "elbv2.k8s.aws/cluster" = var.name
-    "ingress.k8s.aws/stack" = "langfuse/langfuse"
+    "elbv2.k8s.aws/cluster"    = var.name
+    "ingress.k8s.aws/stack"    = "langfuse/langfuse"
     "ingress.k8s.aws/resource" = "LoadBalancer"
   }
 

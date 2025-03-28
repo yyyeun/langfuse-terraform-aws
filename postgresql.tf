@@ -25,8 +25,8 @@ resource "aws_security_group" "postgres" {
 # Random password for PostgreSQL
 # Using a alphanumeric password to avoid issues with special characters on bash entrypoint
 resource "random_password" "postgres_password" {
-  length  = 64
-  special = false
+  length      = 64
+  special     = false
   min_lower   = 1
   min_upper   = 1
   min_numeric = 1
@@ -43,20 +43,20 @@ resource "aws_db_subnet_group" "postgres" {
 }
 
 resource "aws_rds_cluster" "postgres" {
-  cluster_identifier              = "${var.name}-postgres"
-  engine                         = "aurora-postgresql"
-  engine_mode                    = "provisioned"
-  engine_version                 = "15.5"
-  database_name                  = "langfuse"
-  master_username                = "langfuse"
-  master_password                = random_password.postgres_password.result
-  db_subnet_group_name           = aws_db_subnet_group.postgres.name
-  vpc_security_group_ids         = [aws_security_group.postgres.id]
-  skip_final_snapshot           = true
-  storage_encrypted             = true
-  backup_retention_period       = 7
-  preferred_backup_window       = "03:00-04:00"
-  preferred_maintenance_window  = "mon:04:00-mon:05:00"
+  cluster_identifier           = "${var.name}-postgres"
+  engine                       = "aurora-postgresql"
+  engine_mode                  = "provisioned"
+  engine_version               = "15.5"
+  database_name                = "langfuse"
+  master_username              = "langfuse"
+  master_password              = random_password.postgres_password.result
+  db_subnet_group_name         = aws_db_subnet_group.postgres.name
+  vpc_security_group_ids       = [aws_security_group.postgres.id]
+  skip_final_snapshot          = true
+  storage_encrypted            = true
+  backup_retention_period      = 7
+  preferred_backup_window      = "03:00-04:00"
+  preferred_maintenance_window = "mon:04:00-mon:05:00"
 
   serverlessv2_scaling_configuration {
     min_capacity = var.postgres_min_capacity

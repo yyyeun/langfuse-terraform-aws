@@ -8,9 +8,9 @@ resource "aws_s3_bucket" "langfuse" {
 
   # Add tags for better resource management
   tags = {
-    Name        = "${local.bucket_prefix}-${var.name}"
-    Domain      = var.domain
-    Service     = "langfuse"
+    Name    = "${local.bucket_prefix}-${var.name}"
+    Domain  = var.domain
+    Service = "langfuse"
   }
 }
 
@@ -42,7 +42,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "langfuse" {
     status = "Enabled"
 
     filter {
-      prefix = ""  # Empty prefix matches all objects
+      prefix = "" # Empty prefix matches all objects
     }
 
     transition {

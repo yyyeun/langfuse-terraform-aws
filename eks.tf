@@ -3,7 +3,7 @@ data "aws_eks_cluster_auth" "langfuse" {
 }
 
 resource "aws_eks_cluster" "langfuse" {
-  name     = "${var.name}"
+  name     = var.name
   role_arn = aws_iam_role.eks.arn
   version  = var.kubernetes_version
 

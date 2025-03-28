@@ -72,8 +72,8 @@ resource "aws_iam_policy" "efs" {
         }
       },
       {
-        Effect = "Allow"
-        Action = "elasticfilesystem:DeleteAccessPoint"
+        Effect   = "Allow"
+        Action   = "elasticfilesystem:DeleteAccessPoint"
         Resource = "*"
         Condition = {
           StringLike = {
@@ -85,7 +85,7 @@ resource "aws_iam_policy" "efs" {
   })
 
   tags = {
-   Name = "${local.tag_name} EFS"
+    Name = "${local.tag_name} EFS"
   }
 }
 

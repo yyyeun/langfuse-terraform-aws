@@ -30,17 +30,17 @@ resource "aws_iam_role" "aws_load_balancer_controller" {
 resource "aws_iam_policy" "aws_load_balancer_controller" {
   name        = "AWSLoadBalancerControllerIAMPolicy"
   description = "IAM policy for AWS Load Balancer Controller"
-  
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Effect = "Allow"
-        Action = ["iam:CreateServiceLinkedRole"]
+        Effect   = "Allow"
+        Action   = ["iam:CreateServiceLinkedRole"]
         Resource = "*"
         Condition = {
           StringEquals = {
-            "iam:AWSServiceName": "elasticloadbalancing.amazonaws.com"
+            "iam:AWSServiceName" : "elasticloadbalancing.amazonaws.com"
           }
         }
       },
@@ -110,20 +110,20 @@ resource "aws_iam_policy" "aws_load_balancer_controller" {
         Resource = "*"
       },
       {
-        Effect = "Allow"
-        Action = ["ec2:CreateSecurityGroup"]
+        Effect   = "Allow"
+        Action   = ["ec2:CreateSecurityGroup"]
         Resource = "*"
       },
       {
-        Effect = "Allow"
-        Action = ["ec2:CreateTags"]
+        Effect   = "Allow"
+        Action   = ["ec2:CreateTags"]
         Resource = "arn:aws:ec2:*:*:security-group/*"
         Condition = {
           StringEquals = {
-            "ec2:CreateAction": "CreateSecurityGroup"
+            "ec2:CreateAction" : "CreateSecurityGroup"
           }
           Null = {
-            "aws:RequestTag/elbv2.k8s.aws/cluster": "false"
+            "aws:RequestTag/elbv2.k8s.aws/cluster" : "false"
           }
         }
       },
@@ -136,8 +136,8 @@ resource "aws_iam_policy" "aws_load_balancer_controller" {
         Resource = "arn:aws:ec2:*:*:security-group/*"
         Condition = {
           Null = {
-            "aws:RequestTag/elbv2.k8s.aws/cluster": "true"
-            "aws:ResourceTag/elbv2.k8s.aws/cluster": "false"
+            "aws:RequestTag/elbv2.k8s.aws/cluster" : "true"
+            "aws:ResourceTag/elbv2.k8s.aws/cluster" : "false"
           }
         }
       },
@@ -151,7 +151,7 @@ resource "aws_iam_policy" "aws_load_balancer_controller" {
         Resource = "*"
         Condition = {
           Null = {
-            "aws:ResourceTag/elbv2.k8s.aws/cluster": "false"
+            "aws:ResourceTag/elbv2.k8s.aws/cluster" : "false"
           }
         }
       },
@@ -164,7 +164,7 @@ resource "aws_iam_policy" "aws_load_balancer_controller" {
         Resource = "*"
         Condition = {
           Null = {
-            "aws:RequestTag/elbv2.k8s.aws/cluster": "false"
+            "aws:RequestTag/elbv2.k8s.aws/cluster" : "false"
           }
         }
       },
@@ -191,8 +191,8 @@ resource "aws_iam_policy" "aws_load_balancer_controller" {
         ]
         Condition = {
           Null = {
-            "aws:RequestTag/elbv2.k8s.aws/cluster": "true"
-            "aws:ResourceTag/elbv2.k8s.aws/cluster": "false"
+            "aws:RequestTag/elbv2.k8s.aws/cluster" : "true"
+            "aws:ResourceTag/elbv2.k8s.aws/cluster" : "false"
           }
         }
       },
@@ -227,7 +227,7 @@ resource "aws_iam_policy" "aws_load_balancer_controller" {
         Resource = "*"
         Condition = {
           Null = {
-            "aws:ResourceTag/elbv2.k8s.aws/cluster": "false"
+            "aws:ResourceTag/elbv2.k8s.aws/cluster" : "false"
           }
         }
       },
@@ -241,13 +241,13 @@ resource "aws_iam_policy" "aws_load_balancer_controller" {
         ]
         Condition = {
           StringEquals = {
-            "elasticloadbalancing:CreateAction": [
+            "elasticloadbalancing:CreateAction" : [
               "CreateTargetGroup",
               "CreateLoadBalancer"
             ]
           }
           Null = {
-            "aws:RequestTag/elbv2.k8s.aws/cluster": "false"
+            "aws:RequestTag/elbv2.k8s.aws/cluster" : "false"
           }
         }
       },
@@ -308,7 +308,7 @@ resource "helm_release" "aws_load_balancer_controller" {
 
   set {
     name  = "serviceAccount.create"
-    value = "false"  # Created through Terraform
+    value = "false" # Created through Terraform
   }
 
   set {
@@ -328,6 +328,7 @@ resource "helm_release" "aws_load_balancer_controller" {
 
   depends_on = [
     kubernetes_service_account.aws_load_balancer_controller,
-    aws_iam_role.aws_load_balancer_controller
+    aws_iam_role.aws_load_balancer_controller,
+    aws_eks_fargate_profile.namespaces,
   ]
 }

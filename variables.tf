@@ -20,7 +20,7 @@ variable "kubernetes_version" {
   type        = string
   default     = "1.32"
 }
- 
+
 variable "postgres_instance_count" {
   description = "Number of PostgreSQL instances to create"
   type        = number
@@ -60,7 +60,7 @@ variable "clickhouse_instance_count" {
 variable "fargate_profile_namespaces" {
   description = "List of Namespaces which are created with a fargate profile"
   type        = list(string)
-  default     = [
+  default = [
     "default",
     "langfuse",
     "kube-system",
