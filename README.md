@@ -14,14 +14,14 @@ This module aims to provide a production-ready, secure, and scalable deployment 
 
 ```hcl
 module "langfuse" {
-  source = "github.com/langfuse/langfuse-terraform-aws?ref=0.2.0"
+  source = "github.com/langfuse/langfuse-terraform-aws?ref=0.2.1"
 
   domain = "langfuse.example.com"
-  
+
   # Optional use a different name for your installation
   # e.g. when using the module multiple times on the same AWS account
   name   = "langfuse"
-  
+
   # Optional: Configure the VPC
   vpc_cidr = "10.0.0.0/16"
   use_single_nat_gateway = false  # Using a single NAT gateway decreases costs, but is less resilient
@@ -34,7 +34,7 @@ module "langfuse" {
   postgres_instance_count = 2
   postgres_min_capacity = 0.5
   postgres_max_capacity = 2.0
-  
+
   # Optional: Configure the cache
   cache_node_type = "cache.t4g.small"
   cache_instance_count = 2
@@ -102,7 +102,7 @@ aws eks update-kubeconfig --name langfuse
 
 # Restart the CoreDNS and ClickHouse containers
 kubectl --namespace kube-system rollout restart deploy coredns
-kubectl --namespace langfuse delete pod langfuse-clickhouse-shard0-{0,1,2} langfuse-zookeeper-{0,1,2} 
+kubectl --namespace langfuse delete pod langfuse-clickhouse-shard0-{0,1,2} langfuse-zookeeper-{0,1,2}
 ```
 
 Afterward, your installation should become fully available.
@@ -111,6 +111,7 @@ Navigate to your domain, e.g. langfuse.example.com, to access the Langfuse UI.
 ## Architecture
 
 ![lanfuse-v3-on-aws](./images/langfuse-v3-on-aws.svg)
+
 > :information_source: For more information on Langfuse's architecture, please check [the official documentation](https://langfuse.com/self-hosting#architecture)
 
 ## Features
@@ -129,66 +130,66 @@ This module creates a complete Langfuse stack with the following components:
 
 ## Requirements
 
-| Name | Version |
-|------|---------|
-| terraform | >= 1.0 |
-| aws | >= 5.0 |
+| Name       | Version |
+| ---------- | ------- |
+| terraform  | >= 1.0  |
+| aws        | >= 5.0  |
 | kubernetes | >= 2.10 |
-| helm | >= 2.5 |
+| helm       | >= 2.5  |
 
 ## Providers
 
-| Name | Version |
-|------|---------|
-| aws | >= 5.0 |
+| Name       | Version |
+| ---------- | ------- |
+| aws        | >= 5.0  |
 | kubernetes | >= 2.10 |
-| helm | >= 2.5 |
-| random | >= 3.0 |
-| tls | >= 3.0 |
+| helm       | >= 2.5  |
+| random     | >= 3.0  |
+| tls        | >= 3.0  |
 
 ## Resources
 
-| Name | Type |
-|------|------|
-| aws_eks_cluster.langfuse | resource |
-| aws_eks_fargate_profile.namespaces | resource |
-| aws_rds_cluster.postgres | resource |
+| Name                                    | Type     |
+| --------------------------------------- | -------- |
+| aws_eks_cluster.langfuse                | resource |
+| aws_eks_fargate_profile.namespaces      | resource |
+| aws_rds_cluster.postgres                | resource |
 | aws_elasticache_replication_group.redis | resource |
-| aws_s3_bucket.langfuse | resource |
-| aws_acm_certificate.cert | resource |
-| aws_route53_zone.zone | resource |
-| aws_iam_role.eks | resource |
-| aws_iam_role.fargate | resource |
-| aws_security_group.eks | resource |
-| aws_security_group.postgres | resource |
-| aws_security_group.redis | resource |
-| aws_security_group.vpc_endpoints | resource |
+| aws_s3_bucket.langfuse                  | resource |
+| aws_acm_certificate.cert                | resource |
+| aws_route53_zone.zone                   | resource |
+| aws_iam_role.eks                        | resource |
+| aws_iam_role.fargate                    | resource |
+| aws_security_group.eks                  | resource |
+| aws_security_group.postgres             | resource |
+| aws_security_group.redis                | resource |
+| aws_security_group.vpc_endpoints        | resource |
 
 ## Inputs
 
-| Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
-| name | Name prefix for resources | string | "langfuse" | no |
-| domain | Domain name used for resource naming | string | n/a | yes |
-| vpc_cidr | CIDR block for VPC | string | "10.0.0.0/16" | no |
-| use_single_nat_gateway | To use a single NAT Gateway (cheaper) or one per AZ (more resilient) | bool | true | no |
-| kubernetes_version | Kubernetes version for EKS cluster | string | "1.32" | no |
-| use_encryption_key | Wheter or not to use an Encryption key for LLM API credential and integration credential store | bool | false | no |
-| fargate_profile_namespaces | List of namespaces to create Fargate profiles for | list(string) | ["default", "langfuse", "kube-system"] | no |
-| postgres_instance_count | Number of PostgreSQL instances | number | 2 | no |
-| postgres_min_capacity | Minimum ACU capacity for PostgreSQL Serverless v2 | number | 0.5 | no |
-| postgres_max_capacity | Maximum ACU capacity for PostgreSQL Serverless v2 | number | 2.0 | no |
-| cache_node_type | ElastiCache node type | string | "cache.t4g.small" | no |
-| cache_instance_count | Number of ElastiCache instances | number | 1 | no |
+| Name                       | Description                                                                                    | Type         | Default                                | Required |
+| -------------------------- | ---------------------------------------------------------------------------------------------- | ------------ | -------------------------------------- | :------: |
+| name                       | Name prefix for resources                                                                      | string       | "langfuse"                             |    no    |
+| domain                     | Domain name used for resource naming                                                           | string       | n/a                                    |   yes    |
+| vpc_cidr                   | CIDR block for VPC                                                                             | string       | "10.0.0.0/16"                          |    no    |
+| use_single_nat_gateway     | To use a single NAT Gateway (cheaper) or one per AZ (more resilient)                           | bool         | true                                   |    no    |
+| kubernetes_version         | Kubernetes version for EKS cluster                                                             | string       | "1.32"                                 |    no    |
+| use_encryption_key         | Wheter or not to use an Encryption key for LLM API credential and integration credential store | bool         | false                                  |    no    |
+| fargate_profile_namespaces | List of namespaces to create Fargate profiles for                                              | list(string) | ["default", "langfuse", "kube-system"] |    no    |
+| postgres_instance_count    | Number of PostgreSQL instances                                                                 | number       | 2                                      |    no    |
+| postgres_min_capacity      | Minimum ACU capacity for PostgreSQL Serverless v2                                              | number       | 0.5                                    |    no    |
+| postgres_max_capacity      | Maximum ACU capacity for PostgreSQL Serverless v2                                              | number       | 2.0                                    |    no    |
+| cache_node_type            | ElastiCache node type                                                                          | string       | "cache.t4g.small"                      |    no    |
+| cache_instance_count       | Number of ElastiCache instances                                                                | number       | 1                                      |    no    |
 
 ## Outputs
 
-| Name | Description |
-|------|-------------|
-| cluster_name | EKS Cluster Name |
-| cluster_host | EKS Cluster endpoint |
-| cluster_ca_certificate | EKS Cluster CA certificate |
-| cluster_token | EKS Cluster authentication token |
+| Name                   | Description                      |
+| ---------------------- | -------------------------------- |
+| cluster_name           | EKS Cluster Name                 |
+| cluster_host           | EKS Cluster endpoint             |
+| cluster_ca_certificate | EKS Cluster CA certificate       |
+| cluster_token          | EKS Cluster authentication token |
 
 ## Support
 
