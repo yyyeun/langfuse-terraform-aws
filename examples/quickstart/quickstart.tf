@@ -28,7 +28,7 @@ module "langfuse" {
   cache_instance_count = 2
 
   # Optional: Configure Langfuse Helm chart version
-  langfuse_helm_chart_version = "1.2.8"
+  langfuse_helm_chart_version = "1.2.15"
 }
 
 provider "kubernetes" {
