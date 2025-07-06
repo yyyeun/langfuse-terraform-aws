@@ -4,10 +4,10 @@ variable "name" {
   default     = "langfuse"
 }
 
-variable "domain" {
-  description = "Domain name used for resource naming (e.g., company.com)"
-  type        = string
-}
+#variable "domain" {
+#  description = "Domain name used for resource naming (e.g., company.com)"
+#  type        = string
+#}
 
 variable "vpc_cidr" {
   description = "CIDR block for VPC"

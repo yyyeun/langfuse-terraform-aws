@@ -27,6 +27,69 @@ resource "aws_eks_cluster" "langfuse" {
   ]
 }
 
+# EC2 NodeGroup 추가
+resource "aws_eks_node_group" "default" {
+  cluster_name    = aws_eks_cluster.langfuse.name
+  node_group_name = "${var.name}-nodegroup"
+  node_role_arn   = aws_iam_role.eks_node.arn
+  subnet_ids      = module.vpc.private_subnets
+
+  scaling_config {
+    desired_size = 2
+    max_size     = 3
+    min_size     = 1
+  }
+
+  instance_types = ["t3.medium"]
+  capacity_type  = "ON_DEMAND"
+
+  tags = {
+    Name = "${local.tag_name} NodeGroup"
+  }
+
+  depends_on = [
+    aws_iam_role_policy_attachment.eks_worker_node,
+    aws_iam_role_policy_attachment.eks_cni,
+    aws_iam_role_policy_attachment.eks_registry
+  ]
+}
+
+resource "aws_iam_role" "eks_node" {
+  name = "${var.name}-eks-node"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = {
+    Name = "${local.tag_name} EKS Node"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "eks_worker_node" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+  role       = aws_iam_role.eks_node.name
+}
+
+resource "aws_iam_role_policy_attachment" "eks_cni" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+  role       = aws_iam_role.eks_node.name
+}
+
+resource "aws_iam_role_policy_attachment" "eks_registry" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+  role       = aws_iam_role.eks_node.name
+}
+
 # Enable IRSA
 resource "aws_iam_openid_connect_provider" "eks" {
   client_id_list  = ["sts.amazonaws.com"]
@@ -70,6 +133,12 @@ resource "aws_iam_role_policy_attachment" "fargate_pod_execution_role_policy" {
   role       = aws_iam_role.fargate.name
 }
 
+# Fargate Role에 권한 추가
+resource "aws_iam_role_policy_attachment" "fargate_cni" {
+  role       = aws_iam_role.fargate.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+}
+
 # Fargate Profiles for all configured namespaces
 resource "aws_eks_fargate_profile" "namespaces" {
   for_each = toset(var.fargate_profile_namespaces)
@@ -79,8 +148,27 @@ resource "aws_eks_fargate_profile" "namespaces" {
   pod_execution_role_arn = aws_iam_role.fargate.arn
   subnet_ids             = module.vpc.private_subnets
 
-  selector {
-    namespace = each.value
+  #selector {
+  #  namespace = each.value
+  #}
+  # kube-system 네임스페이스에서 CoreDNS만 Fargate에서 실행하도록 제한
+  dynamic "selector" {
+    for_each = each.value == "kube-system" ? [1] : []
+
+    content {
+      namespace = "kube-system"
+      labels = {
+        "k8s-app" = "kube-dns"
+      }
+    }
+  }
+
+  dynamic "selector" {
+    for_each = each.value != "kube-system" ? [each.value] : []
+
+    content {
+      namespace = each.value
+    }
   }
 
   tags = {

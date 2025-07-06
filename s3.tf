@@ -1,6 +1,7 @@
 locals {
   # Convert domain to bucket-friendly format (e.g., company.com -> company-com)
-  bucket_prefix = replace(var.domain, ".", "-")
+  #bucket_prefix = replace(var.domain, ".", "-")
+  bucket_prefix = "langfuse-temp"
 }
 
 resource "aws_s3_bucket" "langfuse" {
@@ -9,7 +10,7 @@ resource "aws_s3_bucket" "langfuse" {
   # Add tags for better resource management
   tags = {
     Name    = "${local.bucket_prefix}-${var.name}"
-    Domain  = var.domain
+    Domain  = "temp"
     Service = "langfuse"
   }
 }

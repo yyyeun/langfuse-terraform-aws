@@ -8,7 +8,7 @@ langfuse:
       name: langfuse
       key: salt
   nextauth:
-    url: "https://${var.domain}"
+    #url: "http://localhost"
     secret:
       secretKeyRef:
         name: langfuse
@@ -40,6 +40,7 @@ postgresql:
     secretKeys:
       userPasswordKey: postgres-password
 clickhouse:
+  host: langfuse-clickhouse-shard0.langfuse
   auth:
     existingSecret: langfuse
     existingSecretKey: clickhouse-password
@@ -88,10 +89,9 @@ langfuse:
     annotations:
       alb.ingress.kubernetes.io/scheme: internet-facing
       alb.ingress.kubernetes.io/target-type: 'ip'
-      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}, {"HTTPS":443}]'
-      alb.ingress.kubernetes.io/ssl-redirect: '443'
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
     hosts:
-    - host: ${var.domain}
+    - host: ""
       paths:
       - path: /
         pathType: Prefix
@@ -106,6 +106,10 @@ EOT
 }
 
 resource "kubernetes_namespace" "langfuse" {
+  depends_on = [
+    aws_eks_cluster.langfuse
+  ]
+
   metadata {
     name = "langfuse"
   }

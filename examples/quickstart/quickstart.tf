@@ -1,7 +1,8 @@
 module "langfuse" {
   source = "../.."
 
-  domain = "langfuse.example.com"
+  # 도메인 없이 ALB DNS 주소로 접속
+  # domain = ""
 
   # Optional use a different name for your installation
   # e.g. when using the module multiple times on the same AWS account
@@ -12,7 +13,8 @@ module "langfuse" {
 
   # Optional: Configure the VPC
   vpc_cidr               = "10.0.0.0/16"
-  use_single_nat_gateway = false # Using a single NAT gateway decreases costs, but is less resilient
+  # use_single_nat_gateway = false # Using a single NAT gateway decreases costs, but is less resilient
+  use_single_nat_gateway = true
 
   # Optional: Configure the Kubernetes cluster
   kubernetes_version         = "1.32"
@@ -25,7 +27,7 @@ module "langfuse" {
 
   # Optional: Configure the cache
   cache_node_type      = "cache.t4g.small"
-  cache_instance_count = 2
+  cache_instance_count = 1
 
   # Optional: Configure Langfuse Helm chart version
   langfuse_helm_chart_version = "1.2.15"
@@ -34,8 +36,8 @@ module "langfuse" {
 provider "kubernetes" {
   host                   = module.langfuse.cluster_host
   cluster_ca_certificate = module.langfuse.cluster_ca_certificate
-  token                  = module.langfuse.cluster_token
-
+  #token                  = module.langfuse.cluster_token
+  
   exec {
     api_version = "client.authentication.k8s.io/v1beta1"
     command     = "aws"
@@ -47,8 +49,8 @@ provider "helm" {
   kubernetes {
     host                   = module.langfuse.cluster_host
     cluster_ca_certificate = module.langfuse.cluster_ca_certificate
-    token                  = module.langfuse.cluster_token
-
+    #token                  = module.langfuse.cluster_token
+    
     exec {
       api_version = "client.authentication.k8s.io/v1beta1"
       command     = "aws"
